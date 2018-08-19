@@ -1,31 +1,43 @@
 const buttons = document.querySelectorAll(".displayValue"),
       clearBtn = document.querySelector("#clear"),
       equalsBtn = document.querySelector("#equals"),
-      display = document.querySelector("#display p");
-let equation = [];
+      display = document.querySelector("#display p"),
+      decimalBtn = document.querySelector("#decimal");
+let equation = [],
+    prevError = false;
+    
 
 buttons.forEach(
     button => button.addEventListener("click", function(){
-        let value = this.textContent;
+        let value;
+        
+        if(this.id === "decimal") {
+            decimalBtn.disabled = true;
+        }
         if(this.id === "add" ||
            this.id === "subtract" ||
            this.id === "multiply" ||
            this.id === "divide"){
-           value = " " + value + " ";
+           value = " " + this.textContent + " ";
+            decimalBtn.disabled = false;
+        } else {
+            checkForPreviousError();
+            checkForPreviousEquals();
+            value = this.textContent;
         }
         populateDisplay(value);
+        
+        if(equalsBtn.disabled) equalsBtn.disabled = false;
     })
 );
 
 clearBtn.addEventListener("click", function(){
-    clear();
+    clearAll();
 });
 
 equalsBtn.addEventListener("click", function(){
     let solution;
     equation = display.textContent.split(" ");
-    
-    console.log(equation);
     
     if( checkForError(equation) ) { /* error */ }
     else {
@@ -36,21 +48,10 @@ equalsBtn.addEventListener("click", function(){
             solution.toFixed(4);
         
         displayResult(solution);
+        equalsBtn.disabled = true;
     }
     
 });
-
-/***
-order of operations
-
-convert to array
-find first multiplication or division symbol
-operate on value/indices before and after symbol
-remove the three indices from the array and replace with result
-repeat until no division or multiplication left
-do addition and subtraction in order
-
-****/
 
 function orderOperations(){
     for(i = 0; i < equation.length - 1; i++) {
@@ -77,9 +78,9 @@ function orderOperations(){
                 num = subtract(equation[i-1], equation[i+1]);
                 equation.splice(i-1, 3, num);
             }
-        } //end if
+        }
     } //end for
-} // end function
+}
 
 
 function populateDisplay(clickedButton) {
@@ -157,52 +158,55 @@ function divide(...args) {
     return quotient;
 }
 
-function clear(){
-    display.textContent = "";
+function clearAll(){
+    clearDisplay();
     equation = [];
 }
 
-/**
-error function
-
-switch, each case being a numbered error
-
-0: cannot divide by zero
-1: cannot begin or end with operator
-2: cannot have two operators in a row
-3: cannot use multiple decimals in a single number
-
-**/
+function clearDisplay(){
+    display.textContent = "";
+}
 
 function checkForError(equation) {
     let eq = equation,
         errorMessage,
-        errorType = -1,
-        isError = false;
+        errorType = -1;
     
     if(eq[eq.indexOf("/") + 1] == 0) errorType = 0;
     if( eq[0] === "" ) errorType = 1; // eq starts with operator
     if( eq[eq.length - 1] === "" ) {errorType = 1;} //eq ends with operator
         else if( eq.indexOf("") > -1 ) errorType = 2; //two operators in a row, except at the end of the equation
+    if(eq.length <= 1 && eq[0] === "") errorType = 3; //equals button pressed first
     
     switch(errorType){
         case 0:
             errorMessage = "Cannot divide by 0";
-            isError = true;
             break;
         case 1:
             errorMessage = "Must start and end with a number";
-            isError = true;
             break;
         case 2:
             errorMessage = "Cannot have two operators in a row";
-            isError = true;
+            break;
+        case 3:
+            errorMessage = "EQUALS PRESSED FIRST";
             break;
     }
     
+    if(errorType > -1) prevError = true;
     display.textContent = errorMessage;
-    return isError;
+    return prevError;
 }
 
+function checkForPreviousError(){
+    if(prevError) {
+        clearAll();
+        prevError = false;
+    }
+}
 
-
+function checkForPreviousEquals(){
+    if(equalsBtn.disabled) {
+        clearAll();
+    }
+}
