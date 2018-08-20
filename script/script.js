@@ -172,7 +172,10 @@ function checkForError(equation) {
         errorMessage,
         errorType = -1;
     
-    if(eq[eq.indexOf("/") + 1] == 0) errorType = 0;
+    if( eq.indexOf("/") > -1 &&
+        eq[eq.indexOf("/") + 1] == 0) {
+        errorType = 0; // divide by zero error
+    }
     if( eq[0] === "" ) errorType = 1; // eq starts with operator
     if( eq[eq.length - 1] === "" ) {errorType = 1;} //eq ends with operator
         else if( eq.indexOf("") > -1 ) errorType = 2; //two operators in a row, except at the end of the equation
